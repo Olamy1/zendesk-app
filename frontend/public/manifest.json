@@ -1,0 +1,17 @@
+{
+  "name": "Directors Reporting",
+  "author": "DOE",
+  "version": "1.0.0",
+  "private": true,
+  "frameworkVersion": "2.0",
+  "location": {
+    "top_bar": {
+      "url": "index.html",
+      "autoHide": false
+    }
+  },
+  "parameters": [
+    { "name": "BACKEND_BASE_URL", "type": "text", "required": true, "secure": false }
+  ],
+  "requirementsOnly": false
+}
