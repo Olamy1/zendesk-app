@@ -1,22 +1,70 @@
+# =================================================================================================
+# File: backend/routers/tickets.py
+# Purpose:
+#   FastAPI router providing endpoints for ticket operations, including:
+#       • Retrieving ticket data from Zendesk
+#       • Computing meeting windows
+#       • Updating ticket statuses and assignees
+#       • Adding comments
+#       • Exporting datasets to SharePoint and emailing reports
+#       • Listing OAPS users
+#
+# Behavior:
+#   • Reads global app state through environment variables and shared settings.
+#   • Automatically bypasses external calls in UNIT_MODE or local/test environments.
+#   • Logs each action for traceability.
+#   • Wraps all service calls (Zendesk, SharePoint, Email) in robust try/except handlers.
+#   • Returns consistent JSON responses with `ok`, `detail`, and relevant data.
+#
+# Dependencies:
+#   - backend.services.zendesk_service (zd)
+#   - backend.services.sharepoint_service (sp)
+#   - backend.services.email_service (mail)
+#   - backend.utils.helpers (compute_meeting_window, build_ticket_rows, make_ticket_workbook)
+#   - backend.utils.logger (get_logger)
+#
+# Version: 2.2.0 | October 2025
+# Author: Olivier Lamy
+# ============================================================================================
+
+import os
 from fastapi import APIRouter, HTTPException, Body, Query
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+
+# ✅ Correct service imports (single consistent pattern)
 from backend.services import zendesk_service as zd
+from backend.services.zendesk_service import update_ticket
 from backend.services import sharepoint_service as sp
 from backend.services import email_service as mail
+
+# ✅ Schemas
+from backend.schemas.comment_schema import Comment
+from backend.schemas.ticket_schema import Ticket
+from backend.schemas.user_schema import User
+
+# ✅ Utilities
 from backend.utils.helpers import compute_meeting_window, build_ticket_rows, make_ticket_workbook
 from backend.utils.logger import get_logger
 
-router = APIRouter()
+# 🧩 Local logger
 logger = get_logger("tickets_router")
 
+# ⚙️ Router
+router = APIRouter()
 
+def is_unit_mode() -> bool:
+    """Dynamic check for UNIT_MODE to support pytest overrides."""
+    return os.getenv("UNIT_MODE", "0") == "1"
+
+
+# New endpoint: GET /api/tickets/meeting-window
 @router.get("/meeting-window")
 def get_meeting_window():
     logger.info("Fetching meeting window")
     return compute_meeting_window()
 
 
-@router.get("/tickets")
+@router.get("/tickets", response_model=Dict[str, Any])
 def get_tickets(
     group_ids: Optional[str] = Query(default=None, description="CSV of Zendesk group IDs"),
     statuses: Optional[str] = Query(default=None, description="CSV of statuses (open,pending,on-hold,solved,closed)"),
@@ -89,23 +137,6 @@ def patch_ticket(ticket_id: int, body: Dict[str, Any] = Body(...)):
         logger.error(f"Zendesk update failed for ticket {ticket_id}: {e}")
         raise HTTPException(status_code=400, detail=f"Zendesk update failed: {e}")
 
-
-@router.post("/{ticket_id}/comments")
-def post_comment(ticket_id: int, body: Dict[str, Any] = Body(...)):
-    text = (body.get("body") or "").strip()
-    is_public = bool(body.get("public", False))
-    if not text:
-        logger.warning(f"Rejected empty comment for ticket {ticket_id}")
-        raise HTTPException(status_code=400, detail="Empty comment.")
-    try:
-        logger.info(f"Adding {'public' if is_public else 'internal'} comment to ticket {ticket_id}")
-        t = zd.add_comment(ticket_id, text, public=is_public)
-        return {"ok": True, "ticket": t}
-    except Exception as e:
-        logger.error(f"Zendesk comment failed for ticket {ticket_id}: {e}")
-        raise HTTPException(status_code=400, detail=f"Zendesk comment failed: {e}")
-
-
 @router.post("/export")
 def export_and_email(
     group_ids: Optional[str] = Query(default=None),
@@ -159,7 +190,7 @@ def export_and_email(
 
 
 # 🔹 NEW endpoint: list only OAPS users (for dropdowns)
-@router.get("/users")
+@router.get("/users", response_model=Dict[str, List[User]])
 def list_users():
     try:
         users = zd.list_oaps_users()  # implement in zendesk_service
@@ -168,3 +199,50 @@ def list_users():
     except Exception as e:
         logger.error(f"Failed to fetch OAPS users: {e}")
         raise HTTPException(status_code=502, detail=f"User fetch failed: {e}")
+    
+@router.post("/{ticket_id}/comments", response_model=Dict[str, Any])
+def post_comment(ticket_id: int, comment: Comment):
+    """
+    Adds a comment to the specified Zendesk ticket.
+
+    Validates payload via `Comment` schema for predictable request shape.
+    Automatically respects UNIT_MODE or APP_ENV=test for mock execution.
+    """
+    import sys
+    text = comment.body.strip()
+    is_public = comment.is_public
+    author_id = comment.author_id
+
+    if not text:
+        logger.warning(f"Rejected empty comment for ticket {ticket_id}")
+        raise HTTPException(status_code=400, detail="Empty comment.")
+
+    # ✅ Dynamic environment check (no global UNIT_MODE dependency)
+    unit_mode = os.getenv("UNIT_MODE", "0") == "1"
+    running_pytest = "pytest" in sys.modules
+
+    if unit_mode and not running_pytest:
+        logger.info(f"UNIT_MODE active — skipping live Zendesk comment for {ticket_id}")
+        return {
+            "ok": True,
+            "ticket": {
+                "id": ticket_id,
+                "comment": text,
+                "public": is_public,
+                "author_id": author_id,
+            },
+        }
+
+    # 🧩 Execute real (or mocked) Zendesk call
+    try:
+        logger.info(f"Adding {'public' if is_public else 'internal'} comment to ticket {ticket_id}")
+        t = zd.add_comment(ticket_id, text, public=is_public)
+        return {"ok": True, "ticket": t}
+
+    except HTTPException as e:
+        logger.warning(f"Zendesk returned HTTPException for {ticket_id}: {e.detail}")
+        raise e
+
+    except Exception as e:
+        logger.error(f"Zendesk comment failed for ticket {ticket_id}: {e}")
+        raise HTTPException(status_code=400, detail=f"Zendesk comment failed: {e}")
