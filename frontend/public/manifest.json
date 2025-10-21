@@ -22,6 +22,12 @@
       "type": "text",
       "required": true,
       "secure": false
+    },
+    {
+      "name": "API_KEY",
+      "type": "text",
+      "required": false,
+      "secure": true
     }
   ],
   "requirementsOnly": false

@@ -129,6 +129,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 def read_root() -> dict[str, str]:
     return {"status": "ok", "message": "Zendesk Reporting API is running"}
 
+@app.get("/health", tags=["Health"])
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+@app.get("/api/v2/health", tags=["Health"])
+def health_v2() -> dict[str, str]:
+    return {"status": "ok", "version": app.version}
+
 # ---------------------------------------------------------------------------------------------
 # 🧠 Lifespan Hook
 # ---------------------------------------------------------------------------------------------

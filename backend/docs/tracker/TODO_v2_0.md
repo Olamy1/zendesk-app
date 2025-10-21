@@ -35,12 +35,12 @@ Target Outcome: Internal pilot-ready Zendesk app (ticket view + real-time update
 
 🪶 ZAF Manifest & Setup
 [x] manifest.json SDK v2.0
-[] Define app parameters (BACKEND_URL, API_KEY)
+[x] Define app parameters (BACKEND_URL, API_KEY)
 [x] Add ticket_sidebar + nav_bar locations
 
 🧩 Vanilla ZAF App
-[] index.html + SDK script
-[] index.js to init ZAFClient
+[x] index.html + SDK script
+[x] index.js to init ZAFClient
 [x] Display tickets from /api/tickets
 [x] Status/assignee dropdowns (PATCH → FastAPI)
 [x] Comments + note field integration
@@ -49,8 +49,8 @@ Target Outcome: Internal pilot-ready Zendesk app (ticket view + real-time update
 
 ⚙️ Backend Communication Layer
 [x] CORS setup for Zendesk origins
-[] /health endpoint
-[] Frontend call logging
+[x] /health endpoint
+[x] Frontend call logging
 
 📊 Phase 3 — MVP Feature Delivery
 
@@ -74,4 +74,30 @@ Target Outcome: Internal pilot-ready Zendesk app (ticket view + real-time update
 [] “Last export” metadata display
 
 ✅ Deliverable for v2.0:
-A fully functional Zendesk sidebar app with backend-connected ticket table, reassignment, and export capabilities — deployable in DOE sandbox via ZAT.
+A fully functional Zendesk sidebar app with backend-connected ticket table, reassignment, and export capabilities - deployable in DOE sandbox via ZAT.
+
+
+---
+
+## ZAT Setup & Local Preview (Phase 2)
+
+Prep done (no ZAT required)
+- [x] Add ZAT origin to sample CORS (`.env.example`)
+- [x] Create `frontend/public/settings.json` for local params
+- [x] Enhance `public/assets/index.js` to read ZAF params, then fall back to query (`?backend=`/`?apikey=`) or `settings.json`
+
+Pending — requires ZAT/Ruby
+- [ ] Download and install Ruby + DevKit 3.4.7-1 (x64)
+- [ ] Add Ruby executables to PATH (during install)
+- [ ] Run `ridk install` and select option `3` (MSYS2 toolchain)
+- [ ] Verify Ruby install → `ruby -v` and `gem -v`
+- [ ] Install Zendesk Apps Tools (ZAT) → `gem install zendesk_apps_tools`
+- [ ] Verify ZAT CLI → `zat --version`
+- [ ] Validate manifest.json → `zat validate`
+- [ ] Start backend → `uvicorn backend.main:app --reload --port 8080`
+- [ ] Confirm `CORS_ORIGINS=http://localhost:4567` in `.env`
+- [ ] Run ZAT preview server → from `frontend/public`: `zat server --config settings.json`
+- [ ] Open Zendesk agent UI preview → `https://<subdomain>.zendesk.com/agent/?zat=true`
+- [ ] Verify app loads in ticket sidebar
+- [ ] Test FastAPI connectivity (no CORS errors)
+- [ ] Package for upload → `zat package` creates `zendesk_app.zip`

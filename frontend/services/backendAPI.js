@@ -4,6 +4,8 @@ import { DEFAULT_BACKEND_BASE_URL } from "../config";
 export const getUsers = (token) => req("/api/users", { token });
 
 let BASE = DEFAULT_BACKEND_BASE_URL;
+const CLIENT_TAG = "ZAF-Frontend";
+const CLIENT_VERSION = "2.0.0";
 export function setBackendBaseUrl(url) {
   BASE = url || BASE;
 }
@@ -12,14 +14,21 @@ export function setBackendBaseUrl(url) {
 
 // Internal request helper
 async function req(path, { method = "GET", body, token, retries = 1 } = {}) {
-  const headers = { "Content-Type": "application/json" };
+  const url = `${BASE}${path}`;
+  const startedAt = Date.now();
+  const headers = {
+    "Content-Type": "application/json",
+    "X-Request-Source": CLIENT_TAG,
+    "X-Client-Version": CLIENT_VERSION,
+  };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
   try {
-    const res = await fetch(`${BASE}${path}`, {
+    console.debug(`[API] → ${method} ${url}`);
+    const res = await fetch(url, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
@@ -35,10 +44,15 @@ async function req(path, { method = "GET", body, token, retries = 1 } = {}) {
       } catch (_) {
         detail = res.statusText;
       }
+      const ms = Date.now() - startedAt;
+      console.warn(`[API] ← ${method} ${url} ${res.status} (${ms}ms)`);
       throw { status: res.status, message: detail || "Request failed" };
     }
 
-    return res.json();
+    const json = await res.json();
+    const ms = Date.now() - startedAt;
+    console.debug(`[API] ← ${method} ${url} 200 (${ms}ms)`);
+    return json;
   } catch (err) {
     clearTimeout(timeout);
 
@@ -51,7 +65,8 @@ async function req(path, { method = "GET", body, token, retries = 1 } = {}) {
       return req(path, { method, body, token, retries: retries - 1 });
     }
 
-    console.error("API request failed:", err);
+    const ms = Date.now() - startedAt;
+    console.error(`[API] × ${method} ${url} (${ms}ms)`, err);
     throw err;
   }
 }
