@@ -5,6 +5,9 @@
 import pytest
 from fastapi.testclient import TestClient
 from backend.main import app
+from backend.utils.logger import get_logger
+
+logger = get_logger("users")
 
 client = TestClient(app)
 
@@ -30,3 +33,10 @@ def test_list_users_failure(monkeypatch):
     resp = client.get("/api/users")
     assert resp.status_code == 502
     assert "User fetch failed" in resp.json()["detail"]
+
+
+def test_list_users_empty(monkeypatch):
+    monkeypatch.setattr("backend.routers.users.zd", type("ZD", (), {"list_oaps_users": lambda: []}))
+    resp = client.get("/api/users")
+    assert resp.status_code == 200
+    assert resp.json() == {"users": []}

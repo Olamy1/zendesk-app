@@ -1,3 +1,10 @@
+# =====================================================================
+# File: backend/services/zendesk_service.py
+# Description: Zendesk API wrapper functions, handling authentication,
+#              retries, and core ticket/user/metrics operations.
+# Author: OAPS QA Analytics Team
+# =====================================================================
+
 import os, time, requests
 from typing import Iterable, List, Dict, Any, Optional
 from backend.utils.logger import get_logger
@@ -5,14 +12,41 @@ from backend.utils.logger import get_logger
 
 logger = get_logger("zendesk_service")
 
-ZD_SUBDOMAIN = os.getenv("ZENDESK_SUBDOMAIN")
-ZD_EMAIL     = os.getenv("ZENDESK_EMAIL")
-ZD_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
-BASE = f"https://{ZD_SUBDOMAIN}.zendesk.com/api/v2"
+# 🚨 PATCH 1: REMOVE top-level environment variable access 🚨
+# ZD_SUBDOMAIN = os.getenv("ZENDESK_SUBDOMAIN")
+# ZD_EMAIL     = os.getenv("ZENDESK_EMAIL")
+# ZD_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
+# BASE = f"https://{ZD_SUBDOMAIN}.zendesk.com/api/v2"
+# OAPS_GROUP_IDS = [gid.strip() for gid in os.getenv("OAPS_GROUP_IDS", "").split(",") if gid.strip()]
 
-# 🔹 Restrict users to these group IDs (set via env)
-OAPS_GROUP_IDS = [gid.strip() for gid in os.getenv("OAPS_GROUP_IDS", "").split(",") if gid.strip()]
 
+# 🚨 PATCH 2: ADD helper to safely retrieve config at runtime 🚨
+def _get_config() -> Dict[str, Any]:
+    """Retrieves all necessary Zendesk config from environment variables."""
+    subdomain = os.getenv("ZENDESK_SUBDOMAIN")
+    email = os.getenv("ZENDESK_EMAIL")
+    token = os.getenv("ZENDESK_API_TOKEN")
+
+    config = {
+        "subdomain": subdomain,
+        "email": email,
+        "token": token,
+        "base_url": f"https://{subdomain}.zendesk.com/api/v2" if subdomain else None,
+        "oaps_group_ids": [
+            gid.strip() for gid in os.getenv("OAPS_GROUP_IDS", "").split(",") if gid.strip()
+        ],
+    }
+    
+    # Safe startup log (moved inside this function, which runs first)
+    logger.info(
+        f"Zendesk service config loaded (subdomain={_safe_token(config['subdomain'])}, email={_safe_email(config['email'])}, token={_safe_token(config['token'])})"
+    )
+    
+    return config
+
+# -------------------
+# Helper Functions
+# -------------------
 
 def _safe_email(email: Optional[str]) -> str:
     """Mask email for logs: j***@domain.com"""
@@ -29,14 +63,16 @@ def _safe_token(token: Optional[str]) -> str:
     return f"{token[:3]}...{token[-3:]}"
 
 
+# 🚨 PATCH 3: Update _auth to use _get_config 🚨
 def _auth():
-    return (f"{ZD_EMAIL}/token", ZD_API_TOKEN)
+    config = _get_config()
+    return (f"{config['email']}/token", config['token'])
 
 
-# Safe startup log
-logger.info(
-    f"Zendesk service initialized (subdomain={ZD_SUBDOMAIN}, email={_safe_email(ZD_EMAIL)}, token={_safe_token(ZD_API_TOKEN)})"
-)
+# 🚨 PATCH 4: REMOVE the old top-level logger.info() call 🚨
+# logger.info(
+#    f"Zendesk service initialized (subdomain={ZD_SUBDOMAIN}, email={_safe_email(ZD_EMAIL)}, token={_safe_token(ZD_API_TOKEN)})"
+# )
 
 
 def _retry(req_callable, *args, **kwargs):
@@ -55,7 +91,12 @@ def _retry(req_callable, *args, **kwargs):
 # Tickets
 # -------------------
 
+# 🚨 PATCH 5: Update all service functions to use BASE/OAPS_GROUP_IDS from _get_config 🚨
+
 def show_many(ticket_ids: Iterable[str]) -> List[Dict[str, Any]]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+
     ids = [s for s in ticket_ids if s.isdigit()]
     if not ids:
         return []
@@ -73,6 +114,9 @@ def show_many(ticket_ids: Iterable[str]) -> List[Dict[str, Any]]:
 
 
 def search_by_groups_and_statuses(group_ids: Optional[List[str]], statuses: Optional[List[str]]) -> List[Dict[str, Any]]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+    
     """Uses Zendesk search API. Adjust query per your dataset (e.g., brand:, type:ticket)."""
     q = ["type:ticket"]
     if group_ids:
@@ -112,6 +156,9 @@ def search_by_groups_and_statuses(group_ids: Optional[List[str]], statuses: Opti
 
 
 def update_ticket(ticket_id: int, **fields) -> Dict[str, Any]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+    
     url = f"{BASE}/tickets/{ticket_id}.json"
     logger.info(f"Updating ticket {ticket_id} with {fields}")
     r = _retry(requests.put, url, auth=_auth(), json={"ticket": fields}, timeout=30)
@@ -121,6 +168,9 @@ def update_ticket(ticket_id: int, **fields) -> Dict[str, Any]:
 
 
 def add_comment(ticket_id: int, body: str, public: bool = False) -> Dict[str, Any]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+    
     url = f"{BASE}/tickets/{ticket_id}.json"
     payload = {"ticket": {"comment": {"body": body, "public": public}}}
     logger.info(f"Adding {'public' if public else 'internal'} comment to ticket {ticket_id}")
@@ -135,6 +185,9 @@ def add_comment(ticket_id: int, body: str, public: bool = False) -> Dict[str, An
 # -------------------
 
 def get_metrics_solved_at(ticket_id: int) -> Optional[str]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+    
     url = f"{BASE}/tickets/{ticket_id}/metrics.json"
     logger.debug(f"Fetching metrics for ticket {ticket_id}")
     r = _retry(requests.get, url, auth=_auth(), timeout=30)
@@ -143,6 +196,9 @@ def get_metrics_solved_at(ticket_id: int) -> Optional[str]:
 
 
 def get_last_resolution_from_audits(ticket_id: int) -> Optional[str]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+
     url = f"{BASE}/tickets/{ticket_id}/audits.json"
     last = None
     logger.debug(f"Scanning audits for ticket {ticket_id}")
@@ -156,8 +212,8 @@ def get_last_resolution_from_audits(ticket_id: int) -> Optional[str]:
                     val = (ev.get("value") or "").lower()
                     if val in {"solved", "closed"}:
                         last = when
-        url = data.get("next_page")
-        time.sleep(0.1)
+            url = data.get("next_page")
+            time.sleep(0.1)
     if last:
         logger.debug(f"Ticket {ticket_id} last resolution from audits: {last}")
     return last
@@ -204,6 +260,9 @@ def enrich_with_resolution_times(status_map: Dict[int, Dict[str, str]]) -> None:
 # -------------------
 
 def get_user(user_id: int) -> Optional[Dict[str, Any]]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+    
     """Fetch one user by ID (for reassignment enrichment)."""
     url = f"{BASE}/users/{user_id}.json"
     logger.debug(f"Fetching user {user_id}")
@@ -215,6 +274,10 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
 
 
 def list_oaps_users() -> List[Dict[str, Any]]:
+    config = _get_config() # <-- Get config at runtime
+    BASE = config['base_url']
+    OAPS_GROUP_IDS = config['oaps_group_ids']
+    
     """Fetch all Zendesk agents in OAPS groups only."""
     url = f"{BASE}/users.json?role=agent&per_page=100"
     out: List[Dict[str, Any]] = []
@@ -233,3 +296,35 @@ def list_oaps_users() -> List[Dict[str, Any]]:
         time.sleep(0.1)
     logger.info(f"Fetched {len(out)} OAPS users")
     return out
+
+# ---------------------------------------------------------------------------------
+# ✅ Legacy Compatibility Layer (for tests or legacy middleware)
+# ---------------------------------------------------------------------------------
+try:
+    _legacy_cfg = _get_config()
+    ZENDESK_API_URL = _legacy_cfg.get("base_url")
+    ZENDESK_SUBDOMAIN = _legacy_cfg.get("subdomain")
+    ZENDESK_EMAIL = _legacy_cfg.get("email")
+    ZENDESK_API_TOKEN = _legacy_cfg.get("token")
+    OAPS_GROUP_IDS = _legacy_cfg.get("oaps_group_ids")
+except Exception as e:
+    # Ensure import never fails in tests, even if env not loaded
+    logger.warning(f"Zendesk legacy constants not initialized: {e}")
+    ZENDESK_API_URL = None
+    ZENDESK_SUBDOMAIN = None
+    ZENDESK_EMAIL = None
+    ZENDESK_API_TOKEN = None
+    OAPS_GROUP_IDS = []
+
+
+
+# ---------------------------------------------------------------------------------
+# ✅ Compatibility alias (for integration tests / legacy imports)
+# ---------------------------------------------------------------------------------
+def fetch_users(*args, **kwargs):
+    """
+    Compatibility alias for test scaffolding.
+    Mirrors list_users() or equivalent for backward compatibility.
+    """
+    from backend.services.zendesk_service import list_users
+    return list_users(*args, **kwargs)

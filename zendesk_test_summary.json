@@ -1,0 +1,10 @@
+{
+  "totals": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "runtime": 0.5420725345611572,
+  "module_metrics": {},
+  "group_latency": {}
+}

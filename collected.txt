@@ -1,0 +1,41 @@
+----------------------------------------------------------- Pre-Run Environment Diagnostics -----------------------------------------------------------
+   OAPS Zendesk App ù Test Context   
++-----------------------------------+
+| Key         | Value               |
+|-------------+---------------------|
+| Environment | UNIT                |
+| Mode        | UNIT                |
+| Python      | 3.13                |
+| Timestamp   | 2025-10-15T17:40:07 |
++-----------------------------------+
+ΓÜÖ∩╕Å Loaded settings: APP_ENV=unit, DEBUG=True
+≡ƒÉ¢ [DEBUG] Rich Console Initialized.
+≡ƒÜ½ [UNIT MODE ACTIVE] ΓÇö Zendesk, SharePoint, and network calls disabled.
+≡ƒÉ¢ [DEBUG] Γ£à Global conftest.py loaded successfully.
+INTERNALERROR> Traceback (most recent call last):
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\_pytest\main.py", line 287, in wrap_session
+INTERNALERROR>     config.hook.pytest_sessionstart(session=session)
+INTERNALERROR>     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+INTERNALERROR>     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+INTERNALERROR>            ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+INTERNALERROR>     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+INTERNALERROR>            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\pluggy\_callers.py", line 167, in _multicall
+INTERNALERROR>     raise exception
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+INTERNALERROR>     teardown.throw(exception)
+INTERNALERROR>     ~~~~~~~~~~~~~~^^^^^^^^^^^
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\_pytest\logging.py", line 780, in pytest_sessionstart
+INTERNALERROR>     return (yield)
+INTERNALERROR>             ^^^^^
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\.venv_zendesk_app\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+INTERNALERROR>     res = hook_impl.function(*args)
+INTERNALERROR>   File "C:\Users\olamy\Desktop\Python Assets\Zendesk_App_clean\tests\conftest.py", line 85, in pytest_sessionstart
+INTERNALERROR>     print("\u2699\ufe0f  Bootstrapping OAPS Zendesk Test Environment...")
+INTERNALERROR>     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "C:\Users\olamy\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+INTERNALERROR>     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+INTERNALERROR>            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR> UnicodeEncodeError: 'charmap' codec can't encode characters in position 0-1: character maps to <undefined>

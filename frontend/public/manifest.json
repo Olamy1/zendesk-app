@@ -1,17 +1,28 @@
 {
   "name": "Directors Reporting",
   "author": "DOE",
-  "version": "1.0.0",
-  "private": true,
+  "version": "2.0.0",
+  "private": false,
   "frameworkVersion": "2.0",
   "location": {
     "top_bar": {
-      "url": "index.html",
+      "url": "assets/index.html",
       "autoHide": false
+    },
+    "nav_bar": {
+      "url": "assets/index.html"
+    },
+    "ticket_sidebar": {
+      "url": "assets/index.html"
     }
   },
   "parameters": [
-    { "name": "BACKEND_BASE_URL", "type": "text", "required": true, "secure": false }
+    {
+      "name": "BACKEND_BASE_URL",
+      "type": "text",
+      "required": true,
+      "secure": false
+    }
   ],
   "requirementsOnly": false
 }
