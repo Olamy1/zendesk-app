@@ -65,19 +65,32 @@ Target Outcome: Internal pilot-ready Zendesk app (ticket view + real-time update
 💬 Comments & Notes
 [x] Add comment input
 [x] Post to /api/tickets/{id}/comments
-[] Show last 3 comments inline
+ [x] Backend endpoint: GET /api/v2/tickets/{id}/comments?limit=3
+ [] Show last 3 comments inline (UI)
 
 📤 Exports
 [x] /api/export → SharePoint upload
 [x] "Export Tickets" button in UI
 [x] Email notification post-export
-[] “Last export” metadata display
+ [x] Persist export metadata after /export
+ [x] Backend endpoint: GET /api/v2/tickets/export/last
+ [] "Last export" metadata display (UI)
 
 ✅ Deliverable for v2.0:
 A fully functional Zendesk sidebar app with backend-connected ticket table, reassignment, and export capabilities - deployable in DOE sandbox via ZAT.
 
 
 ---
+
+## Phase 3 Progress (backend complete)
+
+- [x] Comments API: GET `/api/v2/tickets/{id}/comments?limit=3`
+- [x] Export metadata persisted after `/export`
+- [x] Export metadata API: GET `/api/v2/tickets/export/last`
+- [x] Tests added (unit/integration, prefix `test_v2_3_*`)
+- [x] Coverage configured (pytest-cov, 90% threshold)
+- [ ] UI: show last 3 comments inline
+- [ ] UI: display "Last export" metadata
 
 ## ZAT Setup & Local Preview (Phase 2)
 

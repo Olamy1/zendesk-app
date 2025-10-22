@@ -9,6 +9,10 @@
 #   - Prevents double initialization and ensures consistent environment values.
 #   - Preserves console banner, debug logs, and version filter logic.
 #
+#   Both (separate stages)
+#   pytest -q # unit
+#   pytest -m integration -q -o addopts='' # integration
+#
 # Author: Olivier Lamy | October 2025
 # =================================================================================================
 

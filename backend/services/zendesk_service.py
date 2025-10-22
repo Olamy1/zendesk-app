@@ -297,6 +297,46 @@ def list_oaps_users() -> List[Dict[str, Any]]:
     logger.info(f"Fetched {len(out)} OAPS users")
     return out
 
+
+# -------------------
+# Comments
+# -------------------
+
+def get_last_comments(ticket_id: int, limit: int = 3) -> List[Dict[str, Any]]:
+    """
+    Fetch the last N comments for a ticket. If the Zendesk API supports
+    pagination/sorting for comments, this function may be optimized.
+    """
+    config = _get_config()
+    BASE = config['base_url']
+
+    if not BASE:
+        return []
+
+    url = f"{BASE}/tickets/{ticket_id}/comments.json?per_page={max(1, min(limit, 100))}"
+    logger.debug(f"Fetching last {limit} comments for ticket {ticket_id}")
+    r = _retry(requests.get, url, auth=_auth(), timeout=30)
+    data = r.json() or {}
+    comments = data.get("comments", [])
+    # Ensure we only return up to 'limit' comments, preferring most recent
+    comments_sorted = sorted(
+        comments,
+        key=lambda c: c.get("created_at", ""),
+        reverse=True,
+    )
+    out: List[Dict[str, Any]] = []
+    for c in comments_sorted[:limit]:
+        out.append(
+            {
+                "id": c.get("id"),
+                "author_id": c.get("author_id"),
+                "public": c.get("public", False),
+                "created_at": c.get("created_at"),
+                "body": c.get("body", ""),
+            }
+        )
+    return out
+
 # ---------------------------------------------------------------------------------
 # ✅ Legacy Compatibility Layer (for tests or legacy middleware)
 # ---------------------------------------------------------------------------------

@@ -37,8 +37,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = Field(default="Zendesk Reporting App")
 
     # --- Execution Modes ---
-    UNIT_MODE: bool = Field(default=False, env="UNIT_MODE")
-    INTEGRATION_MODE: bool = Field(default=False, env="INTEGRATION_MODE")
+    UNIT_MODE: bool = Field(default=False)
+    INTEGRATION_MODE: bool = Field(default=False)
 
     # --- API & CORS ---
     CORS_ORIGINS: str = Field(default="http://localhost:3000")

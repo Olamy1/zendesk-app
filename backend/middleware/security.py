@@ -30,7 +30,7 @@ from backend.config import get_settings
 logger = logging.getLogger(__name__)
 
 # ✅ Only bypass auth for explicitly safe, non-production environments
-SAFE_ENVS = {"local", "test", "unit", "e2e"}
+SAFE_ENVS = {"local", "unit", "e2e"}
 
 CURRENT_ENV = os.getenv("APP_ENV", "").lower()
 UNIT_MODE = os.getenv("UNIT_MODE", "0")
@@ -44,17 +44,29 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
         app_env = os.getenv("APP_ENV", "").lower()
         unit_mode = os.getenv("UNIT_MODE", "0")
 
-        # ✅ Bypass authentication in safe contexts or public paths
-        if (
-            not path.startswith("/api")
-            or path in {"/", "/docs", "/openapi.json", "/redoc"}
-            or app_env in SAFE_ENVS
-            or unit_mode == "1"
-        ):
-            logger.debug(
-                f"[SecurityMiddleware] 🔓 Auth bypassed for {path} (env={app_env}, unit_mode={unit_mode})"
-            )
+        # TEMP DEBUG: surface key decision inputs (no secrets)
+        logger.info(
+            f"[SecDbg] path={path} env={app_env} unit={unit_mode} starts_api={path.startswith('/api')} api_auth_set={bool(os.getenv('API_AUTH_TOKEN'))}"
+        )
+
+        # ✅ Public docs/health endpoints always open
+        if path in {"/", "/docs", "/openapi.json", "/redoc"}:
             return await call_next(request)
+
+        # ✅ Non-API paths are not protected
+        if not path.startswith("/api"):
+            return await call_next(request)
+
+        # 🚫 Require auth in integration/staging/production
+        if app_env in {"integration", "staging", "production"}:
+            pass  # fall through to token validation
+        else:
+            # 🔓 Allow bypass only for unit/local style runs
+            if unit_mode == "1" or app_env in SAFE_ENVS:
+                logger.debug(
+                    f"[SecurityMiddleware] 🔓 Bypassed for {path} (env={app_env}, unit_mode={unit_mode})"
+                )
+                return await call_next(request)
 
         # 🔁 Reload cached settings dynamically for up-to-date tokens
         get_settings.cache_clear()
@@ -62,6 +74,7 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
 
         # 🔐 Retrieve Bearer token
         auth_header = request.headers.get("Authorization")
+        logger.info(f"[SecDbg] header_present={bool(auth_header)} public_path={path in {'/','/docs','/openapi.json','/redoc'}}")
 
         # 🚨 Missing Authorization header
         if not auth_header:
@@ -81,6 +94,10 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
             )
 
         token = auth_header.split("Bearer ", 1)[-1].strip()
+        # Allow tests/integration to override tokens via API_AUTH_TOKEN
+        test_override = os.getenv("API_AUTH_TOKEN")
+        if test_override:
+            os.environ["ZENDESK_API_TOKEN"] = test_override
 
         # ✅ Retrieve valid token from settings/env
         valid_token = (
@@ -109,3 +126,4 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": str(exc), "path": path},
             )
+

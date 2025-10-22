@@ -28,7 +28,7 @@ from starlette.requests import Request
 os.environ["APP_ENV"] = "unit"
 os.environ["UNIT_MODE"] = "1"
 os.environ["INTEGRATION_MODE"] = "0"
-print(" [UNIT MODE] Enforced — Zendesk API/network calls disabled.")
+print(" [UNIT MODE] Enforced - Zendesk API/network calls disabled.")
 
 # -------------------------------------------------------------------------------------------------
 # 🧱 Console + Traceback Setup
