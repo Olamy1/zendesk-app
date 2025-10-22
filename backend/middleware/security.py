@@ -44,10 +44,6 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
         app_env = os.getenv("APP_ENV", "").lower()
         unit_mode = os.getenv("UNIT_MODE", "0")
 
-        # TEMP DEBUG: surface key decision inputs (no secrets)
-        logger.info(
-            f"[SecDbg] path={path} env={app_env} unit={unit_mode} starts_api={path.startswith('/api')} api_auth_set={bool(os.getenv('API_AUTH_TOKEN'))}"
-        )
 
         # ✅ Public docs/health endpoints always open
         if path in {"/", "/docs", "/openapi.json", "/redoc"}:
@@ -74,7 +70,7 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
 
         # 🔐 Retrieve Bearer token
         auth_header = request.headers.get("Authorization")
-        logger.info(f"[SecDbg] header_present={bool(auth_header)} public_path={path in {'/','/docs','/openapi.json','/redoc'}}")
+        # no debug logging in production middleware
 
         # 🚨 Missing Authorization header
         if not auth_header:
