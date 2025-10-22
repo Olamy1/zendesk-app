@@ -1,35 +1,14 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-*.so
-
-# Virtual environments
-.venv*/
-venv*/
-ENV*/
-env/
-
-# Environment variables
+# Ignore local environment files and secrets
 .env
-*.env
+.env.*
+.env_old
 
-# Pytest / Coverage
-.pytest_cache/
-.coverage
-htmlcov/
+# Python caches
+__pycache__/
+*.pyc
 
-# Logs
-*.log
-
-# VS Code
-.vscode/
-*.code-workspace
-
-# Node / Frontend
-node_modules/
-dist/
-build/
-*.lock
+# Local data artifacts
+backend/data/*.json
+!backend/data/.gitkeep
+.env*
+backend/data/*.json

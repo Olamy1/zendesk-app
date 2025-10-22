@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zendesk App</title>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .wrap { display: flex; align-items: center; justify-content: center; height: 100%; background: #f7f7f9; }
+      .card { background: #fff; border: 1px solid #e6e6ef; border-radius: 10px; padding: 16px 18px; width: 100%; max-width: 520px; box-shadow: 0 1px 12px rgba(0,0,0,0.06); }
+      .hdr { font-weight: 600; font-size: 14px; color: #111827; margin: 0 0 8px; }
+      .sub { font-size: 12px; color: #6b7280; margin: 0 0 14px; }
+      .row { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #374151; }
+      .key { width: 140px; color: #6b7280; }
+      .val { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ok { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 999px; padding: 3px 8px; }
+      .err { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; border-radius: 999px; padding: 3px 8px; }
+      .muted { color: #9ca3af; }
+    </style>
+    <script src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <p class="hdr">Zendesk App Loaded</p>
+        <p class="sub">This minimal shell initializes ZAF, reads parameters, and pings backend health.</p>
+
+        <div class="row"><span class="key">Backend URL</span><span id="backend" class="val muted">(loading…)</span></div>
+        <div class="row"><span class="key">API Key</span><span id="apikey" class="val muted">(not set)</span></div>
+        <div class="row"><span class="key">Health</span><span id="health" class="val muted">(pending)</span></div>
+      </div>
+    </div>
+
+    <script src="index.js"></script>
+  </body>
+  </html>
+

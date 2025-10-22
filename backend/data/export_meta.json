@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-10-22T19:50:48.441597+00:00",
+  "filename": "export.xlsx",
+  "sharepointUrl": "https://sharepoint/site/export.xlsx",
+  "rows": 1,
+  "filters": {
+    "group_ids": [
+      "1"
+    ],
+    "statuses": [
+      "open"
+    ],
+    "ids_csv": null
+  }
+}

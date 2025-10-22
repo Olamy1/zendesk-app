@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = backend
+
+[report]
+omit =
+    backend/services/email_service.py
+    backend/services/sharepoint_service.py
+
